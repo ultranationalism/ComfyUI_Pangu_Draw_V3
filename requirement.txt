@@ -1,0 +1,4 @@
+omegaconf
+pytorch_lightning
+kornia
+open_clip_torch
