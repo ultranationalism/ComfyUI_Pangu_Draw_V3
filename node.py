@@ -10,7 +10,7 @@ import time
 from omegaconf import OmegaConf
 from .sgm.helpers import SD_XL_BASE_RATIOS, VERSION2SPECS,load_model_from_config,init_sampling
 from .sgm.util import seed_everything
-
+from .comfysp.loader import PanGu_load_checkpoint
 
 BASE_SIZE_LIST = [
     (256, 1024),
@@ -121,11 +121,7 @@ class PanGu_txt2img:
 	TITLE = "PanGu_draw_v3 do txt2img"
 
 	def txt2img(self,low,high,sd_xl_base_ratios,prompt,negative_prompt,seed,orig_width,orig_height,target_width,target_height,crop_coords_top,crop_coords_left,aesthetic_score,negative_aesthetic_score,aesthetic_scale,anime_scale,photography_scale,num_cols,guidance_scale,steps):
-		comfy_path = os.path.dirname(folder_paths.__file__)
-		config_path = os.path.join(comfy_path, 'custom_nodes/ComfyUI_Pangu_Draw_V3/config/inference/pangu_sd_xl_base.yaml')
-		config = OmegaConf.load(config_path)
-		version = config.pop("version", "PanGu-SDXL-base-1.0")
-		version_dict = VERSION2SPECS.get(version)
+		version_dict = VERSION2SPECS.get("PanGu-SDXL-base-1.0")
 		seed_everything(seed)
 		W, H = SD_XL_BASE_RATIOS[sd_xl_base_ratios]
 		C = version_dict["C"]
@@ -187,9 +183,6 @@ class PanGu_txt2img:
 			filter=filter,
 			amp_level=00,
 		)
-		#out = randn.copy()
-		#out = {}
-		#out["samples"] = samples
 		print(f"Txt2Img sample step {sampler.num_steps}, time cost: {time.time() - s_time:.2f}s")
 
 		return samples
@@ -204,9 +197,72 @@ def get_other_scale(value_dict):
         other_scale.append(value_dict["photography_scale"])
     return other_scale
 
+
+class advancedPanGuCheckpointLoader:
+	@classmethod
+	def INPUT_TYPES(s):
+		return {
+			"required": {
+				"model": (folder_paths.get_filename_list("checkpoints"),),
+			}
+		}
+	RETURN_TYPES = ("MODEL", "CLIP", "VAE")
+	#RETURN_NAMES = ("low","high",)
+	FUNCTION = "load_checkpoint"
+	CATEGORY = "PanGu_draw_v3"
+	TITLE = "PanGu_draw_v3 Checkpoint Loader"
+
+	def load_checkpoint(self, model):
+		model = folder_paths.get_full_path("checkpoints", model)
+		out =PanGu_load_checkpoint(model,output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
+		return out[:3]
+
+class PanGu_Sample:
+	@classmethod
+	def INPUT_TYPES(s):
+		return {"required":
+					{"low": ("MODEL",),
+					"high": ("MODEL",),
+					"seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+					"steps": ("INT", {"default": 40, "min": 2, "max": 10000}),
+					"sd_xl_base_ratios":("STRING",{"default":1.0}),
+					#"cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01}),
+					#"scheduler": (comfy.samplers.KSampler.SCHEDULERS, ),
+					"prompt": ("STRING", {
+                    "multiline": True, #
+                    "default": "1girl"
+                }),
+					"negative_prompt": ("STRING", {
+                    "multiline": True, 
+                }),
+					"orig_width":("INT",{"default":0}),
+					"orig_height":("INT",{"default":0}),
+					"target_width":("INT",{"default":0}),
+					"target_height":("INT",{"default":0}),
+					"crop_coords_top":("INT",{"default":0}),
+					"crop_coords_left":("INT",{"default":0}),
+					"aesthetic_score":("FLOAT",{"default":0}),
+					"negative_aesthetic_score":("FLOAT",{"default":0}),
+					"aesthetic_scale":("FLOAT",{"default":4.0}),
+					"anime_scale":("FLOAT",{"default":0}),
+					"photography_scale":("FLOAT",{"default":0}),
+					"num_cols":("INT",{"default":1}),
+					"guidance_scale":("FLOAT",{
+						"default":6.0,
+						"display": "number"}),
+					#"latent_image": ("LATENT", ),
+					#"denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+						}
+				}
+
+
+
+
+
 NODE_CLASS_MAPPINGS= {
     "load PanGu Draw V3 model":PanGuCheckpointLoader,
     "PanGu Draw V3 do t2i":PanGu_txt2img,
+	"load PanGu Draw V3 model(advaced)":advancedPanGuCheckpointLoader
 }
 
 
