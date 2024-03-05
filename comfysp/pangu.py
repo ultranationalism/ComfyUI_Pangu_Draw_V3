@@ -23,7 +23,7 @@ from ..sgm.util import (append_dims, autocast, count_params, default,
 
 
 class PanGu_SDXL_UNET(BaseModel):
-    def __init__(self, model_config, model_type=ModelType.EPS, device=None,):
+    def __init__(self, model_config, model_type=ModelType.EDM, device=None,):
         super().__init__(model_config=model_config,model_type=model_type, device=device)
         self.embedder = Timestep(256)
         self.noise_augmentor = CLIPEmbeddingNoiseAugmentation(**{"noise_schedule_config": {"timesteps": 1000, "beta_schedule": "squaredcos_cap_v2"}, "timestep_dim": 1280})
