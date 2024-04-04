@@ -22,7 +22,7 @@ This program is used to support the operation of **PanGu Draw V3 SDXL** on **
 
 4. Comfyui and webui do not support this model，So I created a comfyui node to run this model.You cannot run this model before these two UIs support it. 
 
-5. This node uses **sgm**. Please ensure that there are no other sgm in your Python environment, otherwise an **error **will be reported
+5. This node uses **sgm**. Please ensure that there are no other sgm in your Python environment, otherwise an error will be reported(Temporarily unable to coexist with ComfyUI MotionCtrl SVD)
 
 6. This project is in the development stage, and bugs and errors may occur. Please understand the risks and limitations of use.
 
